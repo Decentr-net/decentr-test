@@ -62,8 +62,8 @@ describe('community', function() {
 
     describe("blog", function () {
         it("jack can create a post", function () {
-            var dc = new decentr.Decentr(restUrl, chainId)
             var wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+            var dc = new decentr.Decentr(restUrl, chainId)
 
             const post = {
                 category: decentr.PostCategory.WorldNews,
