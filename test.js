@@ -146,6 +146,14 @@ describe('community', function () {
         posts = await decentr.getUserPosts(restUrl, jackWallet.address)
         assert.lengthOf(posts, 1)
         assert.equal(posts[0].likesCount, 1)
+
+        // token balance increased
+        const tokens = await decentr.getTokenBalance(restUrl, jackWallet.address)
+        assert.equal(tokens,  1e-7)
+
+        // one stats item created
+        const stats = await decentr.getPDVStats(restUrl, jackWallet.address)
+        assert.lengthOf(stats, 1)
     })
 
     it("jack cannot create a post with a short text", async function () {
