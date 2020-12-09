@@ -126,4 +126,29 @@ describe('community', function() {
         }
     })
 
+    it("jack can create 10 posts of the different categories", async function () {
+        this.timeout(10 * 10000)
+
+        let wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+        let dc = new decentr.Decentr(restUrl, chainId)
+
+        let randCategory = () => Math.floor(Math.random() * Math.floor(6)) + 1
+
+        for (let i = 0; i < 10; i++) {
+            const post = {
+                category: randCategory(),
+                previewImage: 'https://someimage.com',
+                title: 'Post title' + i,
+                text: 'This is some dummy text greater than 15 symbols ' + i,
+            }
+
+            let resp = await dc.createPost(wallet.address, post, {
+                broadcast: true,
+                privateKey: wallet.privateKey,
+            });
+
+            console.log(resp)
+        }
+    })
+
 });
