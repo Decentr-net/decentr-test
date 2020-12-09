@@ -61,8 +61,8 @@ describe('community', function () {
 
     it("jack can create a post", async function () {
         this.timeout(10000)
-        let wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
-        let dc = new decentr.Decentr(restUrl, chainId)
+        const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+        const dc = new decentr.Decentr(restUrl, chainId)
 
         const post = {
             category: decentr.PostCategory.WorldNews,
@@ -80,9 +80,77 @@ describe('community', function () {
         assert.lengthOf(posts, 1)
     })
 
-    it("jack cannot create a post with a short text", async function () {
-        let wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+    it("jack can create and delete own post", async function () {
+        this.timeout(20 * 1000)
+        const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+        const dc = new decentr.Decentr(restUrl, chainId)
+
+        const post = {
+            category: decentr.PostCategory.WorldNews,
+            previewImage: 'https://someimage.com',
+            title: 'Post title',
+            text: 'This is some dummy text greater than 15 symbols',
+        }
+
+        await dc.createPost(wallet.address, post, {
+            broadcast: true,
+            privateKey: wallet.privateKey,
+        });
+
+        let posts = await decentr.getUserPosts(restUrl, wallet.address)
+        assert.lengthOf(posts, 1)
+
+        await dc.deletePost(wallet.address, {
+            author: posts[0].owner,
+            postId: posts[0].uuid,
+        }, {
+            broadcast: true,
+            privateKey: wallet.privateKey,
+        });
+
+        posts = await decentr.getUserPosts(restUrl, wallet.address)
+        assert.lengthOf(posts, 0)
+    })
+
+    it("jack can create a post and alice likes it", async function () {
+        this.timeout(20 * 1000)
+        const jackWallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+        const aliceWallet = decentr.createWalletFromMnemonic(alice.mnemonic)
         let dc = new decentr.Decentr(restUrl, chainId)
+
+        const post = {
+            category: decentr.PostCategory.WorldNews,
+            previewImage: 'https://someimage.com',
+            title: 'Post title',
+            text: 'This is some dummy text greater than 15 symbols',
+        }
+
+        await dc.createPost(jackWallet.address, post, {
+            broadcast: true,
+            privateKey: jackWallet.privateKey,
+        });
+
+        let posts = await decentr.getUserPosts(restUrl, jackWallet.address)
+        assert.lengthOf(posts, 1)
+        assert.equal(posts[0].likesCount, 0)
+
+        // alice likes the post
+        await decentr.likePost(restUrl, chainId, aliceWallet.address,  {
+                author: posts[0].owner,
+                postId: posts[0].uuid,
+            }, decentr.LikeWeight.Up, {
+            broadcast: true,
+            privateKey: aliceWallet.privateKey,
+        })
+
+        posts = await decentr.getUserPosts(restUrl, jackWallet.address)
+        assert.lengthOf(posts, 1)
+        assert.equal(posts[0].likesCount, 1)
+    })
+
+    it("jack cannot create a post with a short text", async function () {
+        const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+        const dc = new decentr.Decentr(restUrl, chainId)
 
         const post = {
             category: decentr.PostCategory.WorldNews,
@@ -104,8 +172,8 @@ describe('community', function () {
     it("jack can create 10 posts of the same category", async function () {
         this.timeout(10 * 10000)
 
-        let wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
-        let dc = new decentr.Decentr(restUrl, chainId)
+        const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+        const dc = new decentr.Decentr(restUrl, chainId)
 
         for (let i = 0; i < 10; i++) {
             const post = {
@@ -128,10 +196,10 @@ describe('community', function () {
     it("jack can create 10 posts of the different categories", async function () {
         this.timeout(10 * 10000)
 
-        let wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
-        let dc = new decentr.Decentr(restUrl, chainId)
+        const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+        const dc = new decentr.Decentr(restUrl, chainId)
 
-        let randCategory = () => Math.floor(Math.random() * Math.floor(6)) + 1
+        const randCategory = () => Math.floor(Math.random() * Math.floor(6)) + 1
 
         for (let i = 0; i < 10; i++) {
             const post = {
