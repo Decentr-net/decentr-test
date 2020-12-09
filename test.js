@@ -5,17 +5,17 @@ let shell = require('shelljs')
 const restUrl = 'http://localhost:1317';
 const chainId = 'testnet';
 
-describe('community', function() {
+describe('community', function () {
     let jack, alice
     let decentrd, decentcli
 
-    beforeEach(function(done) {
+    beforeEach(function (done) {
         this.timeout(10000)
         shell.config.silent = true;
 
         // remove decentr home folders
         shell.rm('-rf', '~/.decentrd')
-        shell.rm('-rf',  '~/.decentrcli')
+        shell.rm('-rf', '~/.decentrcli')
 
         shell.exec('decentrd init test --chain-id=' + chainId)
 
@@ -54,14 +54,9 @@ describe('community', function() {
         })
     });
 
-    afterEach(function() {
-        decentcli.kill()
-        decentrd.kill()
-    });
-
-    it("jack and alice have mnemonic", function() {
-        assert.isNotEmpty(jack.mnemonic)
-        assert.isNotEmpty(alice.mnemonic)
+    afterEach(function () {
+        decentcli.kill("SIGINT")
+        decentrd.kill("SIGINT")
     });
 
     it("jack can create a post", async function () {
@@ -80,6 +75,9 @@ describe('community', function() {
             broadcast: true,
             privateKey: wallet.privateKey,
         });
+
+        const posts = await decentr.getUserPosts(restUrl, wallet.address)
+        assert.lengthOf(posts, 1)
     })
 
     it("jack cannot create a post with a short text", async function () {
@@ -117,12 +115,13 @@ describe('community', function() {
                 text: 'This is some dummy text greater than 15 symbols ' + i,
             }
 
-            let resp = await dc.createPost(wallet.address, post, {
+            await dc.createPost(wallet.address, post, {
                 broadcast: true,
                 privateKey: wallet.privateKey,
             });
 
-            console.log(resp)
+            const posts = await decentr.getUserPosts(restUrl, wallet.address)
+            assert.lengthOf(posts, 10)
         }
     })
 
@@ -142,13 +141,13 @@ describe('community', function() {
                 text: 'This is some dummy text greater than 15 symbols ' + i,
             }
 
-            let resp = await dc.createPost(wallet.address, post, {
+            await dc.createPost(wallet.address, post, {
                 broadcast: true,
                 privateKey: wallet.privateKey,
             });
 
-            console.log(resp)
+            const posts = await decentr.getUserPosts(restUrl, wallet.address, {limit: 20})
+            assert.lengthOf(posts, 10)
         }
     })
-
 });
