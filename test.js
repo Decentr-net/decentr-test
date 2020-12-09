@@ -1,13 +1,13 @@
-var decentr = require("decentr-js")
-var assert = require('chai').assert
-var shell = require('shelljs')
+let decentr = require("decentr-js")
+let assert = require('chai').assert
+let shell = require('shelljs')
 
 const restUrl = 'http://localhost:1317';
 const chainId = 'testnet';
 
 describe('community', function() {
-    var jack, alice
-    var decentrd, decentcli
+    let jack, alice
+    let decentrd, decentcli
 
     beforeEach(function(done) {
         this.timeout(10000)
@@ -61,9 +61,9 @@ describe('community', function() {
     });
 
     describe("blog", function () {
-        it("jack can create a post", function () {
-            var wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
-            var dc = new decentr.Decentr(restUrl, chainId)
+        it("jack can create a post", async function () {
+            let wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+            let dc = new decentr.Decentr(restUrl, chainId)
 
             const post = {
                 category: decentr.PostCategory.WorldNews,
@@ -72,7 +72,7 @@ describe('community', function() {
                 text: 'Post text',
             }
 
-            dc.createPost(wallet.address, post,   {
+            await dc.createPost(wallet.address, post,   {
                 broadcast: true,
                 privateKey: wallet.privateKey,
             });
