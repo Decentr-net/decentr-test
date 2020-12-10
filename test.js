@@ -238,4 +238,55 @@ describe('community', function () {
         const posts = await decentr.getUserPosts(restUrl, wallet.address, {limit: 20})
         assert.lengthOf(posts, 10)
     })
+
+    it("jack can create 10 posts and paginate through them", async function () {
+        this.timeout(100 * 1000)
+
+        const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+        const dc = new decentr.Decentr(restUrl, chainId)
+
+        for (let i = 0; i < 10; i++) {
+            const post = createPost(i)
+
+            await dc.createPost(wallet.address, post, {
+                broadcast: true,
+                privateKey: wallet.privateKey,
+            });
+        }
+
+        let posts = await decentr.getUserPosts(restUrl, wallet.address, {limit: 5})
+        assert.lengthOf(posts, 5)
+
+        posts = await decentr.getUserPosts(restUrl, wallet.address, {limit: 2, from: posts[4].uuid})
+        assert.lengthOf(posts, 2)
+
+        posts = await decentr.getUserPosts(restUrl, wallet.address, {limit: 10, from: posts[1].uuid})
+        assert.lengthOf(posts, 3)
+    })
+
+    it("jack can create 3 posts and they are popular", async function () {
+        this.timeout(30 * 1000)
+
+        const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+        const dc = new decentr.Decentr(restUrl, chainId)
+
+        for (let i = 0; i < 3; i++) {
+            const post = createPost(i)
+
+            await dc.createPost(wallet.address, post, {
+                broadcast: true,
+                privateKey: wallet.privateKey,
+            });
+        }
+
+        let posts = await decentr.getPopularPosts(restUrl, "day")
+        assert.lengthOf(posts, 3)
+
+        posts = await decentr.getPopularPosts(restUrl, "week")
+        assert.lengthOf(posts, 3)
+
+        posts = await decentr.getPopularPosts(restUrl, "month")
+        assert.lengthOf(posts, 3)
+    })
+
 });
