@@ -1,6 +1,7 @@
-let decentr = require("decentr-js")
-let assert = require('chai').assert
-let shell = require('shelljs')
+const decentr = require("decentr-js")
+const assert = require('chai').assert
+const shell = require('shelljs')
+
 
 const restUrl = 'http://localhost:1317';
 const chainId = 'testnet';
@@ -287,6 +288,28 @@ describe('community', function () {
 
         posts = await decentr.getPopularPosts(restUrl, "month")
         assert.lengthOf(posts, 3)
+    })
+
+    it("jack can create 3 latest posts", async function () {
+        this.timeout(30 * 1000)
+
+        const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+        const dc = new decentr.Decentr(restUrl, chainId)
+
+        for (let i = 0; i < 3; i++) {
+            const post = createPost(i)
+
+            await dc.createPost(wallet.address, post, {
+                broadcast: true,
+                privateKey: wallet.privateKey,
+            });
+        }
+
+        let posts = await decentr.getLatestPosts(restUrl, {category:  decentr.PostCategory.WorldNews})
+        assert.lengthOf(posts, 3)
+
+        posts = await decentr.getLatestPosts(restUrl, {category:  decentr.PostCategory.HealthAndCulture})
+        assert.lengthOf(posts, 0)
     })
 
 });
