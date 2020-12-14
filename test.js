@@ -2,11 +2,10 @@ const decentr = require("decentr-js")
 const assert = require('chai').assert
 const shell = require('shelljs')
 
-
 const restUrl = 'http://localhost:1317';
 const chainId = 'testnet';
 
-describe('community', function () {
+describe("blockchain", function () {
     let jack, alice
     let decentrd, decentcli
 
@@ -60,256 +59,317 @@ describe('community', function () {
         decentrd.kill("SIGINT")
     });
 
-    const createPost = function(idx) {
-        return {
-            category: decentr.PostCategory.WorldNews,
-            previewImage: 'https://someimage.com' + idx,
-            title: 'Post title' + idx,
-            text: 'This is some dummy text greater than 15 symbols' + idx,
+    describe("community", function () {
+        const createPost = function(idx) {
+            return {
+                category: decentr.PostCategory.WorldNews,
+                previewImage: 'https://someimage.com' + idx,
+                title: 'Post title' + idx,
+                text: 'This is some dummy text greater than 15 symbols' + idx,
+            }
         }
-    }
 
-    it("jack can create a post", async function () {
-        this.timeout(10 * 1000)
-        const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
-        const dc = new decentr.Decentr(restUrl, chainId)
+        it("jack can create a post", async function () {
+            this.timeout(10 * 1000)
+            const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+            const dc = new decentr.Decentr(restUrl, chainId)
 
-        await dc.createPost(wallet.address, createPost(1), {
-            broadcast: true,
-            privateKey: wallet.privateKey,
-        });
+            await dc.createPost(wallet.address, createPost(1), {
+                broadcast: true,
+                privateKey: wallet.privateKey,
+            });
 
-        const posts = await decentr.getUserPosts(restUrl, wallet.address)
-        assert.lengthOf(posts, 1)
-    })
+            const posts = await decentr.getUserPosts(restUrl, wallet.address)
+            assert.lengthOf(posts, 1)
+        })
 
-    it("jack can create and delete own post", async function () {
-        this.timeout(20 * 1000)
-        const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
-        const dc = new decentr.Decentr(restUrl, chainId)
+        it("jack can create a russian post", async function () {
+            this.timeout(10 * 1000)
+            const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+            const dc = new decentr.Decentr(restUrl, chainId)
 
-        await dc.createPost(wallet.address, createPost(1), {
-            broadcast: true,
-            privateKey: wallet.privateKey,
-        });
+            const post = {
+                category: decentr.PostCategory.WorldNews,
+                previewImage: 'https://someimage.com',
+                title: 'Заголовок на русском языке',
+                text: 'Здесь немного текста на русском',
+            }
 
-        let posts = await decentr.getUserPosts(restUrl, wallet.address)
-        assert.lengthOf(posts, 1)
+            await dc.createPost(wallet.address, post,{
+                broadcast: true,
+                privateKey: wallet.privateKey,
+            });
 
-        await dc.deletePost(wallet.address, {
-            author: posts[0].owner,
-            postId: posts[0].uuid,
-        }, {
-            broadcast: true,
-            privateKey: wallet.privateKey,
-        });
+            const posts = await decentr.getUserPosts(restUrl, wallet.address)
+            assert.lengthOf(posts, 1)
+            assert.equal(posts[0].title, post.title)
+            assert.equal(posts[0].text, post.text)
+        })
 
-        posts = await decentr.getUserPosts(restUrl, wallet.address)
-        assert.lengthOf(posts, 0)
-    })
+        it("jack can create and delete own post", async function () {
+            this.timeout(20 * 1000)
+            const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+            const dc = new decentr.Decentr(restUrl, chainId)
 
-    it("jack can create a post and alice likes it", async function () {
-        this.timeout(20 * 1000)
+            await dc.createPost(wallet.address, createPost(1), {
+                broadcast: true,
+                privateKey: wallet.privateKey,
+            });
 
-        const jackWallet = decentr.createWalletFromMnemonic(jack.mnemonic)
-        const aliceWallet = decentr.createWalletFromMnemonic(alice.mnemonic)
-        const dc = new decentr.Decentr(restUrl, chainId)
+            let posts = await decentr.getUserPosts(restUrl, wallet.address)
+            assert.lengthOf(posts, 1)
 
-        await dc.createPost(jackWallet.address, createPost(1), {
-            broadcast: true,
-            privateKey: jackWallet.privateKey,
-        });
+            await dc.deletePost(wallet.address, {
+                author: posts[0].owner,
+                postId: posts[0].uuid,
+            }, {
+                broadcast: true,
+                privateKey: wallet.privateKey,
+            });
 
-        let posts = await decentr.getUserPosts(restUrl, jackWallet.address)
-        assert.lengthOf(posts, 1)
-        assert.equal(posts[0].likesCount, 0)
+            posts = await decentr.getUserPosts(restUrl, wallet.address)
+            assert.lengthOf(posts, 0)
+        })
 
-        // alice likes the post
-        await decentr.likePost(restUrl, chainId, aliceWallet.address,  {
+        it("jack can create a post and alice likes it", async function () {
+            this.timeout(20 * 1000)
+
+            const jackWallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+            const aliceWallet = decentr.createWalletFromMnemonic(alice.mnemonic)
+            const dc = new decentr.Decentr(restUrl, chainId)
+
+            await dc.createPost(jackWallet.address, createPost(1), {
+                broadcast: true,
+                privateKey: jackWallet.privateKey,
+            });
+
+            let posts = await decentr.getUserPosts(restUrl, jackWallet.address)
+            assert.lengthOf(posts, 1)
+            assert.equal(posts[0].likesCount, 0)
+
+            // alice likes the post
+            await decentr.likePost(restUrl, chainId, aliceWallet.address,  {
                 author: posts[0].owner,
                 postId: posts[0].uuid,
             }, decentr.LikeWeight.Up, {
-            broadcast: true,
-            privateKey: aliceWallet.privateKey,
+                broadcast: true,
+                privateKey: aliceWallet.privateKey,
+            })
+
+            posts = await decentr.getUserPosts(restUrl, jackWallet.address)
+            assert.lengthOf(posts, 1)
+            assert.equal(posts[0].likesCount, 1)
+
+            // token balance increased
+            const tokens = await decentr.getTokenBalance(restUrl, jackWallet.address)
+            assert.equal(tokens,  1e-7)
+
+            // one stats item created
+            const stats = await decentr.getPDVStats(restUrl, jackWallet.address)
+            assert.lengthOf(stats, 1)
         })
 
-        posts = await decentr.getUserPosts(restUrl, jackWallet.address)
-        assert.lengthOf(posts, 1)
-        assert.equal(posts[0].likesCount, 1)
+        it("jack can create a post and alice dislikes it", async function () {
+            this.timeout(20 * 1000)
 
-        // token balance increased
-        const tokens = await decentr.getTokenBalance(restUrl, jackWallet.address)
-        assert.equal(tokens,  1e-7)
+            const jackWallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+            const aliceWallet = decentr.createWalletFromMnemonic(alice.mnemonic)
+            const dc = new decentr.Decentr(restUrl, chainId)
 
-        // one stats item created
-        const stats = await decentr.getPDVStats(restUrl, jackWallet.address)
-        assert.lengthOf(stats, 1)
-    })
+            await dc.createPost(jackWallet.address, createPost(1), {
+                broadcast: true,
+                privateKey: jackWallet.privateKey,
+            });
 
-    it("jack can create a post and alice dislikes it", async function () {
-        this.timeout(20 * 1000)
+            let posts = await decentr.getUserPosts(restUrl, jackWallet.address)
+            assert.lengthOf(posts, 1)
+            assert.equal(posts[0].dislikesCount, 0)
 
-        const jackWallet = decentr.createWalletFromMnemonic(jack.mnemonic)
-        const aliceWallet = decentr.createWalletFromMnemonic(alice.mnemonic)
-        const dc = new decentr.Decentr(restUrl, chainId)
+            // alice likes the post
+            await decentr.likePost(restUrl, chainId, aliceWallet.address,  {
+                author: posts[0].owner,
+                postId: posts[0].uuid,
+            }, decentr.LikeWeight.Down, {
+                broadcast: true,
+                privateKey: aliceWallet.privateKey,
+            })
 
-        await dc.createPost(jackWallet.address, createPost(1), {
-            broadcast: true,
-            privateKey: jackWallet.privateKey,
-        });
+            posts = await decentr.getUserPosts(restUrl, jackWallet.address)
+            assert.lengthOf(posts, 1)
+            assert.equal(posts[0].dislikesCount, 1)
 
-        let posts = await decentr.getUserPosts(restUrl, jackWallet.address)
-        assert.lengthOf(posts, 1)
-        assert.equal(posts[0].dislikesCount, 0)
+            // token balance increased
+            const tokens = await decentr.getTokenBalance(restUrl, jackWallet.address)
+            assert.equal(tokens,  -1e-7)
 
-        // alice likes the post
-        await decentr.likePost(restUrl, chainId, aliceWallet.address,  {
-            author: posts[0].owner,
-            postId: posts[0].uuid,
-        }, decentr.LikeWeight.Down, {
-            broadcast: true,
-            privateKey: aliceWallet.privateKey,
+            // one stats item created
+            const stats = await decentr.getPDVStats(restUrl, jackWallet.address)
+            assert.lengthOf(stats, 1)
         })
 
-        posts = await decentr.getUserPosts(restUrl, jackWallet.address)
-        assert.lengthOf(posts, 1)
-        assert.equal(posts[0].dislikesCount, 1)
+        it("jack cannot create a post with a short text", async function () {
+            const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+            const dc = new decentr.Decentr(restUrl, chainId)
 
-        // token balance increased
-        const tokens = await decentr.getTokenBalance(restUrl, jackWallet.address)
-        assert.equal(tokens,  -1e-7)
+            const post = createPost(1)
+            post.text = "short"
 
-        // one stats item created
-        const stats = await decentr.getPDVStats(restUrl, jackWallet.address)
-        assert.lengthOf(stats, 1)
+            try {
+                await dc.createPost(wallet.address, post, {
+                    broadcast: true,
+                    privateKey: wallet.privateKey,
+                });
+            }catch (e) {
+                assert.equal(e.response.data.error, "invalid request: post's length should be between 15 and 10000")
+            }
+        })
+
+        it("jack can create 10 posts of the same category", async function () {
+            this.timeout(100 * 1000)
+
+            const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+            const dc = new decentr.Decentr(restUrl, chainId)
+
+            for (let i = 0; i < 10; i++) {
+                await dc.createPost(wallet.address, createPost(i), {
+                    broadcast: true,
+                    privateKey: wallet.privateKey,
+                });
+            }
+
+            const posts = await decentr.getUserPosts(restUrl, wallet.address)
+            assert.lengthOf(posts, 10)
+        })
+
+        it("jack can create 10 posts of the different categories", async function () {
+            this.timeout(100 * 1000)
+
+            const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+            const dc = new decentr.Decentr(restUrl, chainId)
+
+            const randCategory = () => Math.floor(Math.random() * Math.floor(6)) + 1
+
+            for (let i = 0; i < 10; i++) {
+                const post = createPost(i)
+                post.category = randCategory()
+
+                await dc.createPost(wallet.address, post, {
+                    broadcast: true,
+                    privateKey: wallet.privateKey,
+                });
+            }
+
+            const posts = await decentr.getUserPosts(restUrl, wallet.address, {limit: 20})
+            assert.lengthOf(posts, 10)
+        })
+
+        it("jack can create 10 posts and paginate through them", async function () {
+            this.timeout(100 * 1000)
+
+            const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+            const dc = new decentr.Decentr(restUrl, chainId)
+
+            for (let i = 0; i < 10; i++) {
+                const post = createPost(i)
+
+                await dc.createPost(wallet.address, post, {
+                    broadcast: true,
+                    privateKey: wallet.privateKey,
+                });
+            }
+
+            let posts = await decentr.getUserPosts(restUrl, wallet.address, {limit: 5})
+            assert.lengthOf(posts, 5)
+
+            posts = await decentr.getUserPosts(restUrl, wallet.address, {limit: 2, from: posts[4].uuid})
+            assert.lengthOf(posts, 2)
+
+            posts = await decentr.getUserPosts(restUrl, wallet.address, {limit: 10, from: posts[1].uuid})
+            assert.lengthOf(posts, 3)
+        })
+
+        it("jack can create 3 posts and they are popular", async function () {
+            this.timeout(30 * 1000)
+
+            const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+            const dc = new decentr.Decentr(restUrl, chainId)
+
+            for (let i = 0; i < 3; i++) {
+                const post = createPost(i)
+
+                await dc.createPost(wallet.address, post, {
+                    broadcast: true,
+                    privateKey: wallet.privateKey,
+                });
+            }
+
+            let posts = await decentr.getPopularPosts(restUrl, "day")
+            assert.lengthOf(posts, 3)
+
+            posts = await decentr.getPopularPosts(restUrl, "week")
+            assert.lengthOf(posts, 3)
+
+            posts = await decentr.getPopularPosts(restUrl, "month")
+            assert.lengthOf(posts, 3)
+        })
+
+        it("jack can create 3 latest posts", async function () {
+            this.timeout(30 * 1000)
+
+            const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+            const dc = new decentr.Decentr(restUrl, chainId)
+
+            for (let i = 0; i < 3; i++) {
+                const post = createPost(i)
+
+                await dc.createPost(wallet.address, post, {
+                    broadcast: true,
+                    privateKey: wallet.privateKey,
+                });
+            }
+
+            let posts = await decentr.getLatestPosts(restUrl, {category:  decentr.PostCategory.WorldNews})
+            assert.lengthOf(posts, 3)
+
+            posts = await decentr.getLatestPosts(restUrl, {category:  decentr.PostCategory.HealthAndCulture})
+            assert.lengthOf(posts, 0)
+        })
     })
 
-    it("jack cannot create a post with a short text", async function () {
-        const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
-        const dc = new decentr.Decentr(restUrl, chainId)
+    describe("profile", function () {
 
-        const post = createPost(1)
-        post.text = "short"
+        it("jack registeredAt date is not empty", async function () {
+            this.timeout(20 * 1000)
 
-        try {
-            await dc.createPost(wallet.address, post, {
+            const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+            const dc = new decentr.Decentr(restUrl, chainId)
+
+            const publicProfile = {
+                firstName: "jack",
+                lastName: "ozborn",
+                gender: decentr.Gender.Male,
+                avatar: "https://avatars.com/jack",
+                birthday: "2010-01-03"
+            }
+
+            await dc.setPublicProfile(wallet.address, publicProfile,{
                 broadcast: true,
                 privateKey: wallet.privateKey,
-            });
-        }catch (e) {
-            assert.equal(e.response.data.error, "invalid request: post's length should be between 15 and 10000")
-        }
-    })
+            })
 
-    it("jack can create 10 posts of the same category", async function () {
-        this.timeout(100 * 1000)
+            let profile  = await dc.getPublicProfile(wallet.address)
+            assert.isNotEmpty(profile.registeredAt)
 
-        const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
-        const dc = new decentr.Decentr(restUrl, chainId)
+            const registeredAt = profile.registeredAt
 
-        for (let i = 0; i < 10; i++) {
-            await dc.createPost(wallet.address, createPost(i), {
+            await dc.setPublicProfile(wallet.address, publicProfile,{
                 broadcast: true,
                 privateKey: wallet.privateKey,
-            });
-        }
+            })
 
-        const posts = await decentr.getUserPosts(restUrl, wallet.address)
-        assert.lengthOf(posts, 10)
-    })
-
-    it("jack can create 10 posts of the different categories", async function () {
-        this.timeout(100 * 1000)
-
-        const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
-        const dc = new decentr.Decentr(restUrl, chainId)
-
-        const randCategory = () => Math.floor(Math.random() * Math.floor(6)) + 1
-
-        for (let i = 0; i < 10; i++) {
-            const post = createPost(i)
-            post.category = randCategory()
-
-            await dc.createPost(wallet.address, post, {
-                broadcast: true,
-                privateKey: wallet.privateKey,
-            });
-        }
-
-        const posts = await decentr.getUserPosts(restUrl, wallet.address, {limit: 20})
-        assert.lengthOf(posts, 10)
-    })
-
-    it("jack can create 10 posts and paginate through them", async function () {
-        this.timeout(100 * 1000)
-
-        const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
-        const dc = new decentr.Decentr(restUrl, chainId)
-
-        for (let i = 0; i < 10; i++) {
-            const post = createPost(i)
-
-            await dc.createPost(wallet.address, post, {
-                broadcast: true,
-                privateKey: wallet.privateKey,
-            });
-        }
-
-        let posts = await decentr.getUserPosts(restUrl, wallet.address, {limit: 5})
-        assert.lengthOf(posts, 5)
-
-        posts = await decentr.getUserPosts(restUrl, wallet.address, {limit: 2, from: posts[4].uuid})
-        assert.lengthOf(posts, 2)
-
-        posts = await decentr.getUserPosts(restUrl, wallet.address, {limit: 10, from: posts[1].uuid})
-        assert.lengthOf(posts, 3)
-    })
-
-    it("jack can create 3 posts and they are popular", async function () {
-        this.timeout(30 * 1000)
-
-        const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
-        const dc = new decentr.Decentr(restUrl, chainId)
-
-        for (let i = 0; i < 3; i++) {
-            const post = createPost(i)
-
-            await dc.createPost(wallet.address, post, {
-                broadcast: true,
-                privateKey: wallet.privateKey,
-            });
-        }
-
-        let posts = await decentr.getPopularPosts(restUrl, "day")
-        assert.lengthOf(posts, 3)
-
-        posts = await decentr.getPopularPosts(restUrl, "week")
-        assert.lengthOf(posts, 3)
-
-        posts = await decentr.getPopularPosts(restUrl, "month")
-        assert.lengthOf(posts, 3)
-    })
-
-    it("jack can create 3 latest posts", async function () {
-        this.timeout(30 * 1000)
-
-        const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
-        const dc = new decentr.Decentr(restUrl, chainId)
-
-        for (let i = 0; i < 3; i++) {
-            const post = createPost(i)
-
-            await dc.createPost(wallet.address, post, {
-                broadcast: true,
-                privateKey: wallet.privateKey,
-            });
-        }
-
-        let posts = await decentr.getLatestPosts(restUrl, {category:  decentr.PostCategory.WorldNews})
-        assert.lengthOf(posts, 3)
-
-        posts = await decentr.getLatestPosts(restUrl, {category:  decentr.PostCategory.HealthAndCulture})
-        assert.lengthOf(posts, 0)
+            profile  = await dc.getPublicProfile(wallet.address)
+            assert.equal(profile.registeredAt, registeredAt, "registeredAt changed")
+        })
     })
 
 });
