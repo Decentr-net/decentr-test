@@ -167,6 +167,12 @@ describe("blockchain", function () {
             // one stats item created
             const stats = await decentr.getPDVStats(restUrl, jackWallet.address)
             assert.lengthOf(stats, 1)
+
+            // alice has one liked post
+            const likedPosts = await decentr.getLikedPosts(restUrl, aliceWallet.address)
+            assert.equal(Object.keys(likedPosts).length, 1)
+            const postUUID = Object.keys(likedPosts)[0]
+            assert.equal(likedPosts[postUUID], decentr.LikeWeight.Up)
         })
 
         it("jack can create a post and alice dislikes it", async function () {
@@ -205,6 +211,12 @@ describe("blockchain", function () {
             // one stats item created
             const stats = await decentr.getPDVStats(restUrl, jackWallet.address)
             assert.lengthOf(stats, 1)
+
+            // alice has one liked post
+            const likedPosts = await decentr.getLikedPosts(restUrl, aliceWallet.address)
+            assert.equal(Object.keys(likedPosts).length, 1)
+            const postUUID = Object.keys(likedPosts)[0]
+            assert.equal(likedPosts[postUUID], decentr.LikeWeight.Down)
         })
 
         it("jack cannot create a post with a short text", async function () {
@@ -247,7 +259,7 @@ describe("blockchain", function () {
             const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
             const dc = new decentr.Decentr(restUrl, chainId)
 
-            const randCategory = () => Math.floor(Math.random() * Math.floor(6)) + 1
+            const randCategory = () => Math.floor(Math.random() * Math.floor(7)) + 1
 
             for (let i = 0; i < 10; i++) {
                 const post = createPost(i)
