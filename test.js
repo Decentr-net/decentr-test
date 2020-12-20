@@ -74,6 +74,9 @@ describe("blockchain", function () {
             const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
             const dc = new decentr.Decentr(restUrl, chainId)
 
+            const balanceBeforePost = (await dc.getAccount(wallet.address)).coins[0].amount
+            assert.isNotEmpty(balanceBeforePost)
+
             await dc.createPost(wallet.address, createPost(1), {
                 broadcast: true,
                 privateKey: wallet.privateKey,
@@ -81,6 +84,34 @@ describe("blockchain", function () {
 
             const posts = await decentr.getUserPosts(restUrl, wallet.address)
             assert.lengthOf(posts, 1)
+
+            // make sure jack balance has not changed
+            const balanceAfterPost = (await dc.getAccount(wallet.address)).coins[0].amount
+            assert.equal(balanceBeforePost, balanceAfterPost)
+        })
+
+        it("jack can create a big post", async function () {
+            this.timeout(10 * 1000)
+            const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+            const dc = new decentr.Decentr(restUrl, chainId)
+
+            const balanceBeforePost = (await dc.getAccount(wallet.address)).coins[0].amount
+            assert.isNotEmpty(balanceBeforePost)
+
+            const post = createPost(1)
+            post.text = "x".repeat(64000)
+
+            await dc.createPost(wallet.address, post, {
+                broadcast: true,
+                privateKey: wallet.privateKey,
+            });
+
+            const posts = await decentr.getUserPosts(restUrl, wallet.address)
+            assert.lengthOf(posts, 1)
+
+            // make sure jack balance has not changed
+            const balanceAfterPost = (await dc.getAccount(wallet.address)).coins[0].amount
+            assert.equal(balanceBeforePost, balanceAfterPost)
         })
 
         it("jack can create a russian post", async function () {
@@ -138,6 +169,9 @@ describe("blockchain", function () {
             const aliceWallet = decentr.createWalletFromMnemonic(alice.mnemonic)
             const dc = new decentr.Decentr(restUrl, chainId)
 
+            const balanceBeforePost = (await dc.getAccount(aliceWallet.address)).coins[0].amount
+            assert.isNotEmpty(balanceBeforePost)
+
             await dc.createPost(jackWallet.address, createPost(1), {
                 broadcast: true,
                 privateKey: jackWallet.privateKey,
@@ -155,6 +189,10 @@ describe("blockchain", function () {
                 broadcast: true,
                 privateKey: aliceWallet.privateKey,
             })
+
+            // make sure alice balance has not changed
+            const balanceAfterPost = (await dc.getAccount(aliceWallet.address)).coins[0].amount
+            assert.equal(balanceBeforePost, balanceAfterPost)
 
             posts = await decentr.getUserPosts(restUrl, jackWallet.address)
             assert.lengthOf(posts, 1)
@@ -232,7 +270,24 @@ describe("blockchain", function () {
                     privateKey: wallet.privateKey,
                 });
             }catch (e) {
-                assert.equal(e.response.data.error, "invalid request: post's length should be between 15 and 10000")
+                assert.equal(e.response.data.error, "invalid request: post's length should be between 15 symbols and 64000 bytes")
+            }
+        })
+
+        it("jack cannot create a post with a large text", async function () {
+            const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+            const dc = new decentr.Decentr(restUrl, chainId)
+
+            const post = createPost(1)
+            post.text = "x".repeat(64000 + 1)
+
+            try {
+                await dc.createPost(wallet.address, post, {
+                    broadcast: true,
+                    privateKey: wallet.privateKey,
+                });
+            }catch (e) {
+                assert.equal(e.response.data.error, "invalid request: post's length should be between 15 symbols and 64000 bytes")
             }
         })
 
@@ -259,7 +314,7 @@ describe("blockchain", function () {
             const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
             const dc = new decentr.Decentr(restUrl, chainId)
 
-            const randCategory = () => Math.floor(Math.random() * Math.floor(7)) + 1
+            const randCategory = () => Math.floor(Math.random() * Math.floor(8)) + 1
 
             for (let i = 0; i < 10; i++) {
                 const post = createPost(i)
