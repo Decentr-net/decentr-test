@@ -10,7 +10,7 @@ describe("blockchain", function () {
     let decentrd, decentcli
 
     beforeEach(function (done) {
-        this.timeout(10 * 1000)
+        this.timeout(12 * 1000)
         shell.config.silent = true;
 
         // remove decentr home folders
@@ -38,7 +38,7 @@ describe("blockchain", function () {
         shell.exec('decentrd validate-genesis')
 
         // run the node
-        decentrd = shell.exec('decentrd start', {async: true})
+        decentrd = shell.exec(`decentrd start --community-moderator-addr=${jack.address}`, {async: true})
         let up = false
         decentrd.stdout.on('data', function (data) {
             if (data.includes("Executed block") && !up) {
@@ -159,6 +159,65 @@ describe("blockchain", function () {
             });
 
             posts = await decentr.getUserPosts(restUrl, wallet.address)
+            assert.lengthOf(posts, 0)
+        })
+
+        it("alice can not delete jack's post", async function () {
+            this.timeout(20 * 1000)
+            const jackWallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+            const aliceWallet = decentr.createWalletFromMnemonic(alice.mnemonic)
+
+            const dc = new decentr.Decentr(restUrl, chainId)
+
+            await dc.createPost(jackWallet.address, createPost(1), {
+                broadcast: true,
+                privateKey: jackWallet.privateKey,
+            });
+
+            let posts = await decentr.getUserPosts(restUrl, jackWallet.address)
+            assert.lengthOf(posts, 1)
+
+           try {
+                await dc.deletePost(aliceWallet.address, {
+                   author: posts[0].owner,
+                   postId: posts[0].uuid,
+               }, {
+                   broadcast: true,
+                   privateKey: aliceWallet.privateKey,
+               });
+           } catch (e) {
+               assert.isTrue(e.response.data.error.includes("unauthorized: Incorrect Owner"))
+           }
+
+            posts = await decentr.getUserPosts(restUrl, jackWallet.address)
+            assert.lengthOf(posts, 1)
+        })
+
+        it("jack as moderator can delete any post", async function () {
+            this.timeout(20 * 1000)
+
+            const jackWallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+            const aliceWallet = decentr.createWalletFromMnemonic(alice.mnemonic)
+
+            const dc = new decentr.Decentr(restUrl, chainId)
+
+            await dc.createPost(aliceWallet.address, createPost(1), {
+                broadcast: true,
+                privateKey: aliceWallet.privateKey,
+            });
+
+            let posts = await decentr.getUserPosts(restUrl, aliceWallet.address)
+            assert.lengthOf(posts, 1)
+
+            await dc.deletePost(jackWallet.address, {
+                author: posts[0].owner,
+                postId: posts[0].uuid,
+            }, {
+                broadcast: true,
+                privateKey: jackWallet.privateKey,
+            });
+
+            posts = await decentr.getUserPosts(restUrl, aliceWallet.address)
             assert.lengthOf(posts, 0)
         })
 
