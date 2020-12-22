@@ -10,7 +10,7 @@ describe("blockchain", function () {
     let decentrd, decentcli
 
     beforeEach(function (done) {
-        this.timeout(10000)
+        this.timeout(10 * 1000)
         shell.config.silent = true;
 
         // remove decentr home folders
@@ -398,7 +398,7 @@ describe("blockchain", function () {
             let posts = await decentr.getLatestPosts(restUrl, {category:  decentr.PostCategory.WorldNews})
             assert.lengthOf(posts, 3)
 
-            posts = await decentr.getLatestPosts(restUrl, {category:  decentr.PostCategory.HealthAndCulture})
+            posts = await decentr.getLatestPosts(restUrl, {category:  decentr.PostCategory.HealthAndFitness})
             assert.lengthOf(posts, 0)
         })
     })
@@ -436,6 +436,9 @@ describe("blockchain", function () {
 
             profile  = await dc.getPublicProfile(wallet.address)
             assert.equal(profile.registeredAt, registeredAt, "registeredAt changed")
+
+            const balance = await dc.getTokenBalance(wallet.address)
+            assert.equal(1, balance)
         })
     })
 
