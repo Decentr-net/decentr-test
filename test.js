@@ -404,6 +404,8 @@ describe("blockchain", function () {
                 });
             }
 
+
+            // users posts
             let posts = await decentr.getUserPosts(restUrl, wallet.address, {limit: 5})
             assert.lengthOf(posts, 5)
 
@@ -412,6 +414,29 @@ describe("blockchain", function () {
 
             posts = await decentr.getUserPosts(restUrl, wallet.address, {limit: 10, from: posts[1].uuid})
             assert.lengthOf(posts, 3)
+
+            // latest posts
+            posts = await decentr.getLatestPosts(restUrl, {category:  decentr.PostCategory.WorldNews, limit: 5})
+            assert.lengthOf(posts, 5)
+
+            posts = await decentr.getLatestPosts(restUrl, {category:  decentr.PostCategory.WorldNews, limit: 2, from: posts[4].uuid})
+            assert.lengthOf(posts, 2)
+
+            posts = await decentr.getLatestPosts(restUrl,  {category:  decentr.PostCategory.WorldNews, limit: 10, from: posts[1].uuid})
+            assert.lengthOf(posts, 3)
+
+            // popular posts
+            for (let period in ["day", "week", "month"]) {
+                posts = await decentr.getPopularPosts(restUrl, period, {limit: 5})
+                assert.lengthOf(posts, 5)
+
+                posts = await decentr.getPopularPosts(restUrl, period, {limit: 2, from: posts[4].uuid})
+                assert.lengthOf(posts, 2)
+
+                posts = await decentr.getPopularPosts(restUrl, period, {limit: 10, from: posts[1].uuid})
+                assert.lengthOf(posts, 3)
+            }
+
         })
 
         it("jack can create 3 posts and they are popular", async function () {
@@ -464,7 +489,7 @@ describe("blockchain", function () {
 
     describe("profile", function () {
 
-        it("jack registeredAt date is not empty", async function () {
+        it("jack registeredAt date is not empty and initial balance is 1", async function () {
             this.timeout(20 * 1000)
 
             const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
@@ -498,6 +523,23 @@ describe("blockchain", function () {
 
             const balance = await dc.getTokenBalance(wallet.address)
             assert.equal(1, balance)
+        })
+
+        it("jack can set private profile", async function () {
+            this.timeout(20 * 1000)
+
+            const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+            const dc = new decentr.Decentr(restUrl, chainId)
+
+            const privateProfile = {
+                firstName: "jack",
+                lastName: "ozborn",
+            }
+
+            await dc.setPrivateProfile(wallet.address, privateProfile,wallet.privateKey)
+
+            let profile  = await dc.getPrivateProfile(wallet.address, wallet.privateKey)
+            assert.equal(privateProfile, profile)
         })
     })
 
