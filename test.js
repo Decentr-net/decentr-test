@@ -54,10 +54,117 @@ describe("blockchain", function () {
         })
     });
 
-    afterEach(function () {
+    afterEach(async function () {
         decentcli.kill("SIGINT")
         decentrd.kill("SIGINT")
+
+        // wait one second to complete
+        await new Promise(resolve => setTimeout(resolve, 1000));
     });
+
+    /*
+    export interface PDVData {
+    readonly version: string;
+    readonly type: 'cookie';
+    readonly name: string;
+    readonly value: string;
+    readonly domain: string;
+    readonly host_only: boolean;
+    readonly path: string;
+    readonly secure: boolean;
+    readonly same_site: string;
+    readonly expiration_date: number;
+}
+export interface PDV {
+    readonly version: string;
+    readonly pdv: {
+        readonly domain: string;
+        readonly path: string;
+        readonly data: PDVData[];
+        readonly user_agent: string;
+    };
+}
+     */
+
+    describe ("pdv", function() {
+        const pdv = {
+            "version": "v1",
+            "pdv": {
+                "domain": "decentr.net",
+                "path": "/",
+                "user_agent": "mac",
+                "data": [
+                    {
+                        "version": "v1",
+                        "type": "cookie",
+                        "name": "my cookie",
+                        "value": "some value",
+                        "domain": "*",
+                        "host_only": true,
+                        "path": "*",
+                        "secure": true,
+                        "same_site": "None",
+                        "expiration_date": 1861920000
+                    }
+                ]
+            }
+        }
+
+        it("jack can create a single pdv", async function () {
+            this.timeout(10 * 1000)
+            const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+            const dc = new decentr.Decentr(restUrl, chainId)
+
+            const balanceBeforePost = (await dc.getAccount(wallet.address)).coins[0].amount
+            assert.isNotEmpty(balanceBeforePost)
+
+            await dc.sendPDV(pdv, wallet, {
+                broadcast: true,
+                privateKey: wallet.privateKey,
+            })
+
+            const pdvs = await dc.getPDVList(wallet.address)
+            assert.lengthOf(pdvs, 1)
+
+            // make sure jack balance has not changed
+            const balanceAfterPost = (await dc.getAccount(wallet.address)).coins[0].amount
+            assert.equal(balanceBeforePost, balanceAfterPost)
+
+            // token balance increased
+            const tokens = await decentr.getTokenBalance(restUrl, wallet.address)
+            assert.equal(tokens,  1e-7)
+        })
+
+        it("jack can create 3 pdvs", async function () {
+            this.timeout(30 * 1000)
+            const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+            const dc = new decentr.Decentr(restUrl, chainId)
+
+            const balanceBeforePost = (await dc.getAccount(wallet.address)).coins[0].amount
+            assert.isNotEmpty(balanceBeforePost)
+
+            for (let i = 0; i < 3; i++) {
+                let updated = pdv
+                updated.pdv.path = updated.pdv.path + i
+
+                await dc.sendPDV(updated, wallet, {
+                    broadcast: true,
+                    privateKey: wallet.privateKey,
+                })
+            }
+
+            const pdvs = await dc.getPDVList(wallet.address)
+            assert.lengthOf(pdvs, 3)
+
+            // make sure jack balance has not changed
+            const balanceAfterPost = (await dc.getAccount(wallet.address)).coins[0].amount
+            assert.equal(balanceBeforePost, balanceAfterPost)
+
+            // token balance increased
+            const tokens = await decentr.getTokenBalance(restUrl, wallet.address)
+            assert.equal(tokens,  3e-7)
+        })
+    })
 
     describe("community", function () {
         const createPost = function(idx) {
