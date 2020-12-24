@@ -221,29 +221,33 @@ describe("blockchain", function () {
             assert.equal(posts[0].text, post.text)
         })
 
-        it("jack can create and delete own post", async function () {
-            this.timeout(20 * 1000)
+        it("jack can create 5 posts and delete them", async function () {
+            this.timeout(100 * 1000)
             const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
             const dc = new decentr.Decentr(restUrl, chainId)
 
-            await dc.createPost(wallet.address, createPost(1), {
-                broadcast: true,
-                privateKey: wallet.privateKey,
-            });
+            for (let i = 0; i < 5; i ++) {
+                await dc.createPost(wallet.address, createPost(i), {
+                    broadcast: true,
+                    privateKey: wallet.privateKey,
+                });
+            }
 
             let posts = await decentr.getUserPosts(restUrl, wallet.address)
-            assert.lengthOf(posts, 1)
+            assert.lengthOf(posts, 5)
 
-            await dc.deletePost(wallet.address, {
-                author: posts[0].owner,
-                postId: posts[0].uuid,
-            }, {
-                broadcast: true,
-                privateKey: wallet.privateKey,
-            });
+            for (let i = 0; i < 5; i ++) {
+                await dc.deletePost(wallet.address, {
+                    author: posts[i].owner,
+                    postId: posts[i].uuid,
+                }, {
+                    broadcast: true,
+                    privateKey: wallet.privateKey,
+                });
 
-            posts = await decentr.getUserPosts(restUrl, wallet.address)
-            assert.lengthOf(posts, 0)
+                const postsAfterDelete =  await decentr.getUserPosts(restUrl, wallet.address)
+                assert.lengthOf(postsAfterDelete, 5-1-i)
+            }
         })
 
         it("alice can not delete jack's post", async function () {
@@ -305,8 +309,9 @@ describe("blockchain", function () {
             assert.lengthOf(posts, 0)
         })
 
-        it("jack can create a post and alice likes it", async function () {
-            this.timeout(20 * 1000)
+        it.only(`jack can create a post and alice likes it and 
+                jack can delete liked post`, async function () {
+            this.timeout(30 * 1000)
 
             const jackWallet = decentr.createWalletFromMnemonic(jack.mnemonic)
             const aliceWallet = decentr.createWalletFromMnemonic(alice.mnemonic)
@@ -346,14 +351,39 @@ describe("blockchain", function () {
             assert.equal(tokens,  1e-7)
 
             // one stats item created
-            const stats = await decentr.getPDVStats(restUrl, jackWallet.address)
-            assert.lengthOf(stats, 1)
+            const stats1 = await decentr.getPDVStats(restUrl, jackWallet.address)
+            assert.lengthOf(stats1, 1)
 
             // alice has one liked post
-            const likedPosts = await decentr.getLikedPosts(restUrl, aliceWallet.address)
-            assert.equal(Object.keys(likedPosts).length, 1)
-            const postUUID = Object.keys(likedPosts)[0]
-            assert.equal(likedPosts[postUUID], decentr.LikeWeight.Up)
+            const likedPosts1 = await decentr.getLikedPosts(restUrl, aliceWallet.address)
+            assert.equal(Object.keys(likedPosts1).length, 1)
+            const postUUID = Object.keys(likedPosts1)[0]
+            assert.equal(likedPosts1[postUUID], decentr.LikeWeight.Up)
+
+            // jack deleted liked post
+            await dc.deletePost(jackWallet.address, {
+                author: posts[0].owner,
+                postId: posts[0].uuid,
+            }, {
+                broadcast: true,
+                privateKey: jackWallet.privateKey,
+            });
+
+            // make sure jack has no posts
+            posts = await decentr.getUserPosts(restUrl, jackWallet.address)
+            assert.lengthOf(posts, 0)
+
+            // alice has no liked post
+            const likedPosts2 = await decentr.getLikedPosts(restUrl, aliceWallet.address)
+            assert.equal(Object.keys(likedPosts2).length, 1)
+
+            // jack token has not changed
+            const tokens2 = await decentr.getTokenBalance(restUrl, jackWallet.address)
+            assert.equal(tokens2,  1e-7)
+
+            // make sure stats not changed
+            const stats2 = await decentr.getPDVStats(restUrl, jackWallet.address)
+            assert.lengthOf(stats2, 1)
         })
 
         it("jack can create a post and alice dislikes it", async function () {
@@ -473,7 +503,7 @@ describe("blockchain", function () {
             assert.lengthOf(posts, 10)
         })
 
-        it.only("jack can create 10 posts and paginate through them", async function () {
+        it("jack can create 10 posts and paginate through them", async function () {
             this.timeout(100 * 1000)
 
             const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
