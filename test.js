@@ -386,8 +386,8 @@ describe("blockchain", function () {
             assert.lengthOf(stats2, 1)
         })
 
-        it("jack can create a post and alice dislikes it", async function () {
-            this.timeout(20 * 1000)
+        it.only("jack can create a post and alice dislikes it and than remove dislike", async function () {
+            this.timeout(30 * 1000)
 
             const jackWallet = decentr.createWalletFromMnemonic(jack.mnemonic)
             const aliceWallet = decentr.createWalletFromMnemonic(alice.mnemonic)
@@ -416,18 +416,36 @@ describe("blockchain", function () {
             assert.equal(posts[0].dislikesCount, 1)
 
             // token balance increased
-            const tokens = await decentr.getTokenBalance(restUrl, jackWallet.address)
-            assert.equal(tokens,  -1e-7)
+            const tokens1 = await decentr.getTokenBalance(restUrl, jackWallet.address)
+            assert.equal(tokens1,  -1e-7)
 
             // one stats item created
-            const stats = await decentr.getPDVStats(restUrl, jackWallet.address)
-            assert.lengthOf(stats, 1)
+            const stats1 = await decentr.getPDVStats(restUrl, jackWallet.address)
+            assert.lengthOf(stats1, 1)
 
             // alice has one liked post
-            const likedPosts = await decentr.getLikedPosts(restUrl, aliceWallet.address)
-            assert.equal(Object.keys(likedPosts).length, 1)
-            const postUUID = Object.keys(likedPosts)[0]
-            assert.equal(likedPosts[postUUID], decentr.LikeWeight.Down)
+            const likedPosts1 = await decentr.getLikedPosts(restUrl, aliceWallet.address)
+            assert.equal(Object.keys(likedPosts1).length, 1)
+            const postUUID = Object.keys(likedPosts1)[0]
+            assert.equal(likedPosts1[postUUID], decentr.LikeWeight.Down)
+
+            // alice reset like the post
+            await decentr.likePost(restUrl, chainId, aliceWallet.address,  {
+                author: posts[0].owner,
+                postId: posts[0].uuid,
+            }, decentr.LikeWeight.Zero, {
+                broadcast: true,
+                privateKey: aliceWallet.privateKey,
+            })
+
+            const likedPosts2 = await decentr.getLikedPosts(restUrl, aliceWallet.address)
+            assert.equal(Object.keys(likedPosts2).length, 0)
+
+
+            // token balance reset
+            const tokens2 = await decentr.getTokenBalance(restUrl, jackWallet.address)
+            assert.equal(tokens2, 0)
+
         })
 
         it("jack cannot create a post with a short text", async function () {
