@@ -1,3 +1,4 @@
+
 const decentr = require("decentr-js")
 const assert = require('chai').assert
 const shell = require('shelljs')
@@ -61,30 +62,6 @@ describe("blockchain", function () {
         // wait one second to complete
         await new Promise(resolve => setTimeout(resolve, 1000));
     });
-
-    /*
-    export interface PDVData {
-    readonly version: string;
-    readonly type: 'cookie';
-    readonly name: string;
-    readonly value: string;
-    readonly domain: string;
-    readonly host_only: boolean;
-    readonly path: string;
-    readonly secure: boolean;
-    readonly same_site: string;
-    readonly expiration_date: number;
-}
-export interface PDV {
-    readonly version: string;
-    readonly pdv: {
-        readonly domain: string;
-        readonly path: string;
-        readonly data: PDVData[];
-        readonly user_agent: string;
-    };
-}
-     */
 
     describe ("pdv", function() {
         const pdv = {
@@ -496,7 +473,7 @@ export interface PDV {
             assert.lengthOf(posts, 10)
         })
 
-        it("jack can create 10 posts and paginate through them", async function () {
+        it.only("jack can create 10 posts and paginate through them", async function () {
             this.timeout(100 * 1000)
 
             const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
@@ -522,27 +499,46 @@ export interface PDV {
             posts = await decentr.getUserPosts(restUrl, wallet.address, {limit: 10, from: posts[1].uuid})
             assert.lengthOf(posts, 3)
 
+
             // latest posts
             posts = await decentr.getLatestPosts(restUrl, {category:  decentr.PostCategory.WorldNews, limit: 5})
             assert.lengthOf(posts, 5)
 
-            posts = await decentr.getLatestPosts(restUrl, {category:  decentr.PostCategory.WorldNews, limit: 2, from: posts[4].uuid})
+
+            posts = await decentr.getLatestPosts(restUrl, {category:  decentr.PostCategory.WorldNews, limit: 2, fromOwner: posts[4].owner, fromUUID: posts[4].uuid})
             assert.lengthOf(posts, 2)
 
-            posts = await decentr.getLatestPosts(restUrl,  {category:  decentr.PostCategory.WorldNews, limit: 10, from: posts[1].uuid})
+
+            posts = await decentr.getLatestPosts(restUrl,  {category:  decentr.PostCategory.WorldNews, limit: 10, fromOwner: posts[1].owner, fromUUID: posts[1].uuid})
             assert.lengthOf(posts, 3)
 
             // popular posts
-            for (let period in ["day", "week", "month"]) {
-                posts = await decentr.getPopularPosts(restUrl, period, {limit: 5})
-                assert.lengthOf(posts, 5)
+            posts = await decentr.getPopularPosts(restUrl, "day", {limit: 5})
+            assert.lengthOf(posts, 5)
 
-                posts = await decentr.getPopularPosts(restUrl, period, {limit: 2, from: posts[4].uuid})
-                assert.lengthOf(posts, 2)
+            posts = await decentr.getPopularPosts(restUrl, "day", {limit: 2, fromOwner: posts[4].owner, fromUUID: posts[4].uuid})
+            assert.lengthOf(posts, 2)
 
-                posts = await decentr.getPopularPosts(restUrl, period, {limit: 10, from: posts[1].uuid})
-                assert.lengthOf(posts, 3)
-            }
+            posts = await decentr.getPopularPosts(restUrl, "day", {limit: 10, fromOwner: posts[1].owner, fromUUID: posts[1].uuid})
+            assert.lengthOf(posts, 3)
+
+            posts = await decentr.getPopularPosts(restUrl, "week", {limit: 5})
+            assert.lengthOf(posts, 5)
+
+            posts = await decentr.getPopularPosts(restUrl, "week", {limit: 2, fromOwner: posts[4].owner, fromUUID: posts[4].uuid})
+            assert.lengthOf(posts, 2)
+
+            posts = await decentr.getPopularPosts(restUrl, "week", {limit: 10, fromOwner: posts[1].owner, fromUUID: posts[1].uuid})
+            assert.lengthOf(posts, 3)
+
+            posts = await decentr.getPopularPosts(restUrl, "month", {limit: 5})
+            assert.lengthOf(posts, 5)
+
+            posts = await decentr.getPopularPosts(restUrl, "month", {limit: 2, fromOwner: posts[4].owner, fromUUID: posts[4].uuid})
+            assert.lengthOf(posts, 2)
+
+            posts = await decentr.getPopularPosts(restUrl, "month", {limit: 10, fromOwner: posts[1].owner, fromUUID: posts[1].uuid})
+            assert.lengthOf(posts, 3)
 
         })
 
