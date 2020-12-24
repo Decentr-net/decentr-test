@@ -309,7 +309,7 @@ describe("blockchain", function () {
             assert.lengthOf(posts, 0)
         })
 
-        it.only(`jack can create a post and alice likes it and 
+        it(`jack can create a post and alice likes it and 
                 jack can delete liked post`, async function () {
             this.timeout(30 * 1000)
 
