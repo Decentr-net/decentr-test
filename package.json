@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "chai": "^4.2.0",
-    "decentr-js": "^1.6.4",
+    "decentr-js": "^1.7.0",
     "mocha": "^8.2.1",
     "shelljs": "^0.8.4"
   }

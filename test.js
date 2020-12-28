@@ -11,7 +11,7 @@ describe("blockchain", function () {
     let decentrd, decentcli
 
     beforeEach(function (done) {
-        this.timeout(12 * 1000)
+        this.timeout(20 * 1000)
         shell.config.silent = true;
 
         // remove decentr home folders
@@ -87,7 +87,7 @@ describe("blockchain", function () {
             }
         }
 
-        it("jack can create a single pdv", async function () {
+        it.only("jack can create a single login pdv", async function () {
             this.timeout(10 * 1000)
             const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
             const dc = new decentr.Decentr(restUrl, chainId)
@@ -95,7 +95,7 @@ describe("blockchain", function () {
             const balanceBeforePost = (await dc.getAccount(wallet.address)).coins[0].amount
             assert.isNotEmpty(balanceBeforePost)
 
-            await dc.sendPDV(pdv, wallet, {
+            await dc.sendPDV(pdv, decentr.PDVType.LoginCookie, wallet, {
                 broadcast: true,
                 privateKey: wallet.privateKey,
             })
@@ -109,10 +109,10 @@ describe("blockchain", function () {
 
             // token balance increased
             const tokens = await decentr.getTokenBalance(restUrl, wallet.address)
-            assert.equal(tokens,  1e-7)
+            assert.equal(tokens,  4e-7)
         })
 
-        it("jack can create 3 pdvs", async function () {
+        it.only("jack can create 3 pdvs", async function () {
             this.timeout(30 * 1000)
             const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
             const dc = new decentr.Decentr(restUrl, chainId)
@@ -124,7 +124,7 @@ describe("blockchain", function () {
                 let updated = pdv
                 updated.pdv.path = updated.pdv.path + i
 
-                await dc.sendPDV(updated, wallet, {
+                await dc.sendPDV(updated, decentr.PDVType.Cookie, wallet, {
                     broadcast: true,
                     privateKey: wallet.privateKey,
                 })
@@ -139,7 +139,7 @@ describe("blockchain", function () {
 
             // token balance increased
             const tokens = await decentr.getTokenBalance(restUrl, wallet.address)
-            assert.equal(tokens,  3e-7)
+            assert.equal(tokens,  6e-7)
         })
     })
 
@@ -386,7 +386,7 @@ describe("blockchain", function () {
             assert.lengthOf(stats2, 1)
         })
 
-        it.only("jack can create a post and alice dislikes it and than remove dislike", async function () {
+        it("jack can create a post and alice dislikes it and than remove dislike", async function () {
             this.timeout(30 * 1000)
 
             const jackWallet = decentr.createWalletFromMnemonic(jack.mnemonic)
@@ -441,11 +441,9 @@ describe("blockchain", function () {
             const likedPosts2 = await decentr.getLikedPosts(restUrl, aliceWallet.address)
             assert.equal(Object.keys(likedPosts2).length, 0)
 
-
             // token balance reset
             const tokens2 = await decentr.getTokenBalance(restUrl, jackWallet.address)
             assert.equal(tokens2, 0)
-
         })
 
         it("jack cannot create a post with a short text", async function () {
@@ -687,9 +685,9 @@ describe("blockchain", function () {
                 lastName: "ozborn",
             }
 
-            await dc.setPrivateProfile(wallet.address, privateProfile,wallet.privateKey)
+            await dc.setPrivateProfile(wallet.address, privateProfile, wallet.privateKey)
 
-            let profile  = await dc.getPrivateProfile(wallet.address, wallet.privateKey)
+            const profile  = await dc.getPrivateProfile(wallet.address, wallet.privateKey)
             assert.equal(privateProfile, profile)
         })
     })
