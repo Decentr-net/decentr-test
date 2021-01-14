@@ -87,7 +87,7 @@ describe("blockchain", function () {
             }
         }
 
-        it.only("jack can create a single login pdv", async function () {
+        it("jack can create a single login pdv", async function () {
             this.timeout(10 * 1000)
             const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
             const dc = new decentr.Decentr(restUrl, chainId)
@@ -112,7 +112,7 @@ describe("blockchain", function () {
             assert.equal(tokens,  4e-7)
         })
 
-        it.only("jack can create 3 pdvs", async function () {
+        it("jack can create 3 pdvs", async function () {
             this.timeout(30 * 1000)
             const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
             const dc = new decentr.Decentr(restUrl, chainId)
