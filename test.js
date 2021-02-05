@@ -38,8 +38,15 @@ describe("blockchain", function () {
         shell.exec('decentrd collect-gentxs')
         shell.exec('decentrd validate-genesis')
 
+        // set moderator
+        const genesisPath = require('os').homedir() + "/.decentrd/config/genesis.json"
+        const fs = require('fs')
+        let genesis = JSON.parse(fs.readFileSync(genesisPath, 'utf8'))
+        genesis.app_state.community.moderators = [`${jack.address}`]
+        fs.writeFileSync(genesisPath, JSON.stringify(genesis))
+
         // run the node
-        decentrd = shell.exec(`decentrd start --community-moderator-addr=${jack.address}`, {async: true})
+        decentrd = shell.exec(`decentrd start`, {async: true})
         let up = false
         decentrd.stdout.on('data', function (data) {
             if (data.includes("Executed block") && !up) {
@@ -64,15 +71,11 @@ describe("blockchain", function () {
     });
 
     describe ("pdv", function() {
-        const pdv = {
-            "version": "v1",
-            "pdv": {
+        const pdvItem = {
                 "domain": "decentr.net",
                 "path": "/",
-                "user_agent": "mac",
                 "data": [
                     {
-                        "version": "v1",
                         "type": "cookie",
                         "name": "my cookie",
                         "value": "some value",
@@ -85,7 +88,6 @@ describe("blockchain", function () {
                     }
                 ]
             }
-        }
 
         it("jack can create a single login pdv", async function () {
             this.timeout(10 * 1000)
@@ -95,10 +97,8 @@ describe("blockchain", function () {
             const balanceBeforePost = (await dc.getAccount(wallet.address)).coins[0].amount
             assert.isNotEmpty(balanceBeforePost)
 
-            await dc.sendPDV(pdv, decentr.PDVType.LoginCookie, wallet, {
-                broadcast: true,
-                privateKey: wallet.privateKey,
-            })
+            const items = Array.from(Array(100), (_, i) => pdvItem)
+            await dc.sendPDV(items, wallet)
 
             const pdvs = await dc.getPDVList(wallet.address)
             assert.lengthOf(pdvs, 1)
@@ -121,13 +121,8 @@ describe("blockchain", function () {
             assert.isNotEmpty(balanceBeforePost)
 
             for (let i = 0; i < 3; i++) {
-                let updated = pdv
-                updated.pdv.path = updated.pdv.path + i
-
-                await dc.sendPDV(updated, decentr.PDVType.Cookie, wallet, {
-                    broadcast: true,
-                    privateKey: wallet.privateKey,
-                })
+                const items = Array.from(Array(100), (_, i) => pdvItem)
+                await dc.sendPDV(items, wallet)
             }
 
             const pdvs = await dc.getPDVList(wallet.address)
@@ -637,7 +632,6 @@ describe("blockchain", function () {
     })
 
     describe("profile", function () {
-
         it("jack registeredAt date is not empty and initial balance is 1", async function () {
             this.timeout(20 * 1000)
 
