@@ -43,7 +43,7 @@ describe("blockchain", function () {
         const fs = require('fs')
         let genesis = JSON.parse(fs.readFileSync(genesisPath, 'utf8'))
         genesis.app_state.community.moderators = [`${jack.address}`]
-        genesis.app_state.pdv.cerberus_address = 'https://cerberus.testnet2.decentr.xyz'
+        genesis.app_state.pdv.cerberus_address = 'https://cerberus.testnet.decentr.xyz'
         fs.writeFileSync(genesisPath, JSON.stringify(genesis))
 
         // run the node
@@ -109,7 +109,7 @@ describe("blockchain", function () {
         }
 
 
-        it("jack can create a 10 login pdv", async function () {
+        it("jack can create a 100 login pdv", async function () {
             this.timeout(10 * 1000)
             const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
             const dc = new decentr.Decentr(restUrl, chainId)
@@ -117,7 +117,7 @@ describe("blockchain", function () {
             const balanceBefore = (await dc.getAccount(wallet.address)).coins[0].amount
             assert.isNotEmpty(balanceBefore)
 
-            const items = Array.from(Array(10), (_, i) => loginPDVItem)
+            const items = Array.from(Array(100), (_, i) => loginPDVItem)
             await dc.sendPDV(items, wallet, {
                 broadcast: true,
             })
@@ -131,10 +131,10 @@ describe("blockchain", function () {
 
             // token balance increased
             const tokens = await decentr.getTokenBalance(restUrl, wallet.address)
-            assert.equal(tokens,  40e-7)
+            assert.equal(tokens,  400e-7)
         })
 
-        it("jack can create a 10 cookie pdv", async function () {
+        it("jack can create a 100 cookie pdv", async function () {
             this.timeout(10 * 1000)
             const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
             const dc = new decentr.Decentr(restUrl, chainId)
@@ -142,7 +142,7 @@ describe("blockchain", function () {
             const balanceBefore = (await dc.getAccount(wallet.address)).coins[0].amount
             assert.isNotEmpty(balanceBefore)
 
-            const items = Array.from(Array(10), (_, i) => cookiePDVItem)
+            const items = Array.from(Array(100), (_, i) => cookiePDVItem)
             await dc.sendPDV(items, wallet, {
                 broadcast: true,
             })
@@ -156,7 +156,7 @@ describe("blockchain", function () {
 
             // token balance increased
             const tokens = await decentr.getTokenBalance(restUrl, wallet.address)
-            assert.equal(tokens,  20e-7)
+            assert.equal(tokens,  200e-7)
         })
 
         it("jack can create 3 cookie pdv batches", async function () {
@@ -168,7 +168,7 @@ describe("blockchain", function () {
             assert.isNotEmpty(balanceBefore)
 
             for (let i = 0; i < 3; i++) {
-                const items = Array.from(Array(10), (_, i) => cookiePDVItem)
+                const items = Array.from(Array(100), (_, i) => cookiePDVItem)
                 await dc.sendPDV(items, wallet, {
                     broadcast: true,
                 })
@@ -183,7 +183,7 @@ describe("blockchain", function () {
 
             // token balance increased
             const tokens = await decentr.getTokenBalance(restUrl, wallet.address)
-            assert.equal(tokens,  60e-7)
+            assert.equal(tokens,  600e-7)
         })
     })
 
