@@ -43,6 +43,7 @@ describe("blockchain", function () {
         const fs = require('fs')
         let genesis = JSON.parse(fs.readFileSync(genesisPath, 'utf8'))
         genesis.app_state.community.moderators = [`${jack.address}`]
+        genesis.app_state.pdv.cerberus_address = 'https://cerberus.testnet2.decentr.xyz'
         fs.writeFileSync(genesisPath, JSON.stringify(genesis))
 
         // run the node
@@ -71,7 +72,7 @@ describe("blockchain", function () {
     });
 
     describe ("pdv", function() {
-        const pdvItem = {
+        const cookiePDVItem = {
                 "domain": "decentr.net",
                 "path": "/",
                 "data": [
@@ -89,52 +90,100 @@ describe("blockchain", function () {
                 ]
             }
 
-        it("jack can create a single login pdv", async function () {
+        const loginPDVItem = {
+            "domain": "decentr.net",
+            "path": "/",
+            "data": [
+                {
+                    "type": "login_cookie",
+                    "name": "my cookie",
+                    "value": "some value",
+                    "domain": "*",
+                    "host_only": true,
+                    "path": "*",
+                    "secure": true,
+                    "same_site": "None",
+                    "expiration_date": 1861920000
+                }
+            ]
+        }
+
+
+        it("jack can create a 10 login pdv", async function () {
             this.timeout(10 * 1000)
             const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
             const dc = new decentr.Decentr(restUrl, chainId)
 
-            const balanceBeforePost = (await dc.getAccount(wallet.address)).coins[0].amount
-            assert.isNotEmpty(balanceBeforePost)
+            const balanceBefore = (await dc.getAccount(wallet.address)).coins[0].amount
+            assert.isNotEmpty(balanceBefore)
 
-            const items = Array.from(Array(100), (_, i) => pdvItem)
-            await dc.sendPDV(items, wallet)
+            const items = Array.from(Array(10), (_, i) => loginPDVItem)
+            await dc.sendPDV(items, wallet, {
+                broadcast: true,
+            })
 
             const pdvs = await dc.getPDVList(wallet.address)
             assert.lengthOf(pdvs, 1)
 
             // make sure jack balance has not changed
-            const balanceAfterPost = (await dc.getAccount(wallet.address)).coins[0].amount
-            assert.equal(balanceBeforePost, balanceAfterPost)
+            const balanceAfter = (await dc.getAccount(wallet.address)).coins[0].amount
+            assert.equal(balanceBefore, balanceAfter)
 
             // token balance increased
             const tokens = await decentr.getTokenBalance(restUrl, wallet.address)
-            assert.equal(tokens,  4e-7)
+            assert.equal(tokens,  40e-7)
         })
 
-        it("jack can create 3 pdvs", async function () {
+        it("jack can create a 10 cookie pdv", async function () {
+            this.timeout(10 * 1000)
+            const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
+            const dc = new decentr.Decentr(restUrl, chainId)
+
+            const balanceBefore = (await dc.getAccount(wallet.address)).coins[0].amount
+            assert.isNotEmpty(balanceBefore)
+
+            const items = Array.from(Array(10), (_, i) => cookiePDVItem)
+            await dc.sendPDV(items, wallet, {
+                broadcast: true,
+            })
+
+            const pdvs = await dc.getPDVList(wallet.address)
+            assert.lengthOf(pdvs, 1)
+
+            // make sure jack balance has not changed
+            const balanceAfter = (await dc.getAccount(wallet.address)).coins[0].amount
+            assert.equal(balanceBefore, balanceAfter)
+
+            // token balance increased
+            const tokens = await decentr.getTokenBalance(restUrl, wallet.address)
+            assert.equal(tokens,  20e-7)
+        })
+
+        it("jack can create 3 cookie pdv batches", async function () {
             this.timeout(30 * 1000)
             const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
             const dc = new decentr.Decentr(restUrl, chainId)
 
-            const balanceBeforePost = (await dc.getAccount(wallet.address)).coins[0].amount
-            assert.isNotEmpty(balanceBeforePost)
+            const balanceBefore = (await dc.getAccount(wallet.address)).coins[0].amount
+            assert.isNotEmpty(balanceBefore)
 
             for (let i = 0; i < 3; i++) {
-                const items = Array.from(Array(100), (_, i) => pdvItem)
-                await dc.sendPDV(items, wallet)
+                const items = Array.from(Array(10), (_, i) => cookiePDVItem)
+                await dc.sendPDV(items, wallet, {
+                    broadcast: true,
+                })
             }
 
             const pdvs = await dc.getPDVList(wallet.address)
             assert.lengthOf(pdvs, 3)
 
             // make sure jack balance has not changed
-            const balanceAfterPost = (await dc.getAccount(wallet.address)).coins[0].amount
-            assert.equal(balanceBeforePost, balanceAfterPost)
+            const balanceAfter = (await dc.getAccount(wallet.address)).coins[0].amount
+            assert.equal(balanceBefore, balanceAfter)
 
             // token balance increased
             const tokens = await decentr.getTokenBalance(restUrl, wallet.address)
-            assert.equal(tokens,  6e-7)
+            assert.equal(tokens,  60e-7)
         })
     })
 
