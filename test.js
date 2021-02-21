@@ -34,17 +34,12 @@ describe("blockchain", function () {
         // prepare genesis.json
         shell.exec(`decentrd add-genesis-account ${jack.address} 100000000udec`)
         shell.exec(`decentrd add-genesis-account ${alice.address} 100000000udec`)
+        shell.exec(`decentrd add-genesis-community-moderators ${jack.address}`)
+        shell.exec(`decentrd add-genesis-pdv-cerberuses ${jack.address}`)
+
         shell.exec('decentrd gentx --name jack --keyring-backend test --amount 1000000udec')
         shell.exec('decentrd collect-gentxs')
         shell.exec('decentrd validate-genesis')
-
-        // set moderator
-        const genesisPath = require('os').homedir() + "/.decentrd/config/genesis.json"
-        const fs = require('fs')
-        let genesis = JSON.parse(fs.readFileSync(genesisPath, 'utf8'))
-        genesis.app_state.community.moderators = [`${jack.address}`]
-        genesis.app_state.pdv.cerberus_address = 'https://cerberus.testnet.decentr.xyz'
-        fs.writeFileSync(genesisPath, JSON.stringify(genesis))
 
         // run the node
         decentrd = shell.exec(`decentrd start`, {async: true})
@@ -70,122 +65,6 @@ describe("blockchain", function () {
         // wait one second to complete
         await new Promise(resolve => setTimeout(resolve, 1000));
     });
-
-    describe ("pdv", function() {
-        const cookiePDVItem = {
-                "domain": "decentr.net",
-                "path": "/",
-                "data": [
-                    {
-                        "type": "cookie",
-                        "name": "my cookie",
-                        "value": "some value",
-                        "domain": "*",
-                        "host_only": true,
-                        "path": "*",
-                        "secure": true,
-                        "same_site": "None",
-                        "expiration_date": 1861920000
-                    }
-                ]
-            }
-
-        const loginPDVItem = {
-            "domain": "decentr.net",
-            "path": "/",
-            "data": [
-                {
-                    "type": "login_cookie",
-                    "name": "my cookie",
-                    "value": "some value",
-                    "domain": "*",
-                    "host_only": true,
-                    "path": "*",
-                    "secure": true,
-                    "same_site": "None",
-                    "expiration_date": 1861920000
-                }
-            ]
-        }
-
-
-        it("jack can create a 100 login pdv", async function () {
-            this.timeout(10 * 1000)
-            const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
-            const dc = new decentr.Decentr(restUrl, chainId)
-
-            const balanceBefore = (await dc.getAccount(wallet.address)).coins[0].amount
-            assert.isNotEmpty(balanceBefore)
-
-            const items = Array.from(Array(100), (_, i) => loginPDVItem)
-            await dc.sendPDV(items, wallet, {
-                broadcast: true,
-            })
-
-            const pdvs = await dc.getPDVList(wallet.address)
-            assert.lengthOf(pdvs, 1)
-
-            // make sure jack balance has not changed
-            const balanceAfter = (await dc.getAccount(wallet.address)).coins[0].amount
-            assert.equal(balanceBefore, balanceAfter)
-
-            // token balance increased
-            const tokens = await decentr.getTokenBalance(restUrl, wallet.address)
-            assert.equal(tokens,  400e-7)
-        })
-
-        it("jack can create a 100 cookie pdv", async function () {
-            this.timeout(10 * 1000)
-            const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
-            const dc = new decentr.Decentr(restUrl, chainId)
-
-            const balanceBefore = (await dc.getAccount(wallet.address)).coins[0].amount
-            assert.isNotEmpty(balanceBefore)
-
-            const items = Array.from(Array(100), (_, i) => cookiePDVItem)
-            await dc.sendPDV(items, wallet, {
-                broadcast: true,
-            })
-
-            const pdvs = await dc.getPDVList(wallet.address)
-            assert.lengthOf(pdvs, 1)
-
-            // make sure jack balance has not changed
-            const balanceAfter = (await dc.getAccount(wallet.address)).coins[0].amount
-            assert.equal(balanceBefore, balanceAfter)
-
-            // token balance increased
-            const tokens = await decentr.getTokenBalance(restUrl, wallet.address)
-            assert.equal(tokens,  200e-7)
-        })
-
-        it("jack can create 3 cookie pdv batches", async function () {
-            this.timeout(30 * 1000)
-            const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
-            const dc = new decentr.Decentr(restUrl, chainId)
-
-            const balanceBefore = (await dc.getAccount(wallet.address)).coins[0].amount
-            assert.isNotEmpty(balanceBefore)
-
-            for (let i = 0; i < 3; i++) {
-                const items = Array.from(Array(100), (_, i) => cookiePDVItem)
-                await dc.sendPDV(items, wallet, {
-                    broadcast: true,
-                })
-            }
-
-            const pdvs = await dc.getPDVList(wallet.address)
-            assert.lengthOf(pdvs, 3)
-
-            // make sure jack balance has not changed
-            const balanceAfter = (await dc.getAccount(wallet.address)).coins[0].amount
-            assert.equal(balanceBefore, balanceAfter)
-
-            // token balance increased
-            const tokens = await decentr.getTokenBalance(restUrl, wallet.address)
-            assert.equal(tokens,  600e-7)
-        })
-    })
 
     describe("community", function () {
         const createPost = function(idx) {
