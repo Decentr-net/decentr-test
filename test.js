@@ -81,10 +81,10 @@ describe("blockchain", function () {
             const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
             const dc = new decentr.Decentr(restUrl, chainId)
 
-            const balanceBeforePost = (await dc.getAccount(wallet.address)).coins[0].amount
+            const balanceBeforePost = (await dc.profile.getAccount(wallet.address)).coins[0].amount
             assert.isNotEmpty(balanceBeforePost)
 
-            await dc.createPost(wallet.address, createPost(1), {
+            await dc.community.createPost(wallet.address, createPost(1), {
                 broadcast: true,
                 privateKey: wallet.privateKey,
             });
@@ -93,7 +93,7 @@ describe("blockchain", function () {
             assert.lengthOf(posts, 1)
 
             // make sure jack balance has not changed
-            const balanceAfterPost = (await dc.getAccount(wallet.address)).coins[0].amount
+            const balanceAfterPost = (await dc.profile.getAccount(wallet.address)).coins[0].amount
             assert.equal(balanceBeforePost, balanceAfterPost)
         })
 
@@ -102,13 +102,13 @@ describe("blockchain", function () {
             const wallet = decentr.createWalletFromMnemonic(jack.mnemonic)
             const dc = new decentr.Decentr(restUrl, chainId)
 
-            const balanceBeforePost = (await dc.getAccount(wallet.address)).coins[0].amount
+            const balanceBeforePost = (await dc.profile.getAccount(wallet.address)).coins[0].amount
             assert.isNotEmpty(balanceBeforePost)
 
             const post = createPost(1)
             post.text = "x".repeat(64000)
 
-            await dc.createPost(wallet.address, post, {
+            await dc.community.createPost(wallet.address, post, {
                 broadcast: true,
                 privateKey: wallet.privateKey,
             });
@@ -117,7 +117,7 @@ describe("blockchain", function () {
             assert.lengthOf(posts, 1)
 
             // make sure jack balance has not changed
-            const balanceAfterPost = (await dc.getAccount(wallet.address)).coins[0].amount
+            const balanceAfterPost = (await dc.community.getAccount(wallet.address)).coins[0].amount
             assert.equal(balanceBeforePost, balanceAfterPost)
         })
 
@@ -133,7 +133,7 @@ describe("blockchain", function () {
                 text: 'Здесь немного текста на русском',
             }
 
-            await dc.createPost(wallet.address, post,{
+            await dc.community.createPost(wallet.address, post,{
                 broadcast: true,
                 privateKey: wallet.privateKey,
             });
@@ -150,7 +150,7 @@ describe("blockchain", function () {
             const dc = new decentr.Decentr(restUrl, chainId)
 
             for (let i = 0; i < 5; i ++) {
-                await dc.createPost(wallet.address, createPost(i), {
+                await dc.community.createPost(wallet.address, createPost(i), {
                     broadcast: true,
                     privateKey: wallet.privateKey,
                 });
@@ -160,7 +160,7 @@ describe("blockchain", function () {
             assert.lengthOf(posts, 5)
 
             for (let i = 0; i < 5; i ++) {
-                await dc.deletePost(wallet.address, {
+                await dc.community.deletePost(wallet.address, {
                     author: posts[i].owner,
                     postId: posts[i].uuid,
                 }, {
@@ -180,7 +180,7 @@ describe("blockchain", function () {
 
             const dc = new decentr.Decentr(restUrl, chainId)
 
-            await dc.createPost(jackWallet.address, createPost(1), {
+            await dc.community.createPost(jackWallet.address, createPost(1), {
                 broadcast: true,
                 privateKey: jackWallet.privateKey,
             });
@@ -189,7 +189,7 @@ describe("blockchain", function () {
             assert.lengthOf(posts, 1)
 
            try {
-                await dc.deletePost(aliceWallet.address, {
+                await dc.community.deletePost(aliceWallet.address, {
                    author: posts[0].owner,
                    postId: posts[0].uuid,
                }, {
@@ -212,7 +212,7 @@ describe("blockchain", function () {
 
             const dc = new decentr.Decentr(restUrl, chainId)
 
-            await dc.createPost(aliceWallet.address, createPost(1), {
+            await dc.community.createPost(aliceWallet.address, createPost(1), {
                 broadcast: true,
                 privateKey: aliceWallet.privateKey,
             });
@@ -220,7 +220,7 @@ describe("blockchain", function () {
             let posts = await decentr.getUserPosts(restUrl, aliceWallet.address)
             assert.lengthOf(posts, 1)
 
-            await dc.deletePost(jackWallet.address, {
+            await dc.community.deletePost(jackWallet.address, {
                 author: posts[0].owner,
                 postId: posts[0].uuid,
             }, {
@@ -240,10 +240,10 @@ describe("blockchain", function () {
             const aliceWallet = decentr.createWalletFromMnemonic(alice.mnemonic)
             const dc = new decentr.Decentr(restUrl, chainId)
 
-            const balanceBeforePost = (await dc.getAccount(aliceWallet.address)).coins[0].amount
+            const balanceBeforePost = (await dc.profile.getAccount(aliceWallet.address)).coins[0].amount
             assert.isNotEmpty(balanceBeforePost)
 
-            await dc.createPost(jackWallet.address, createPost(1), {
+            await dc.community.createPost(jackWallet.address, createPost(1), {
                 broadcast: true,
                 privateKey: jackWallet.privateKey,
             });
@@ -262,7 +262,7 @@ describe("blockchain", function () {
             })
 
             // make sure alice balance has not changed
-            const balanceAfterPost = (await dc.getAccount(aliceWallet.address)).coins[0].amount
+            const balanceAfterPost = (await dc.profile.getAccount(aliceWallet.address)).coins[0].amount
             assert.equal(balanceBeforePost, balanceAfterPost)
 
             posts = await decentr.getUserPosts(restUrl, jackWallet.address)
@@ -284,7 +284,7 @@ describe("blockchain", function () {
             assert.equal(likedPosts1[postUUID], decentr.LikeWeight.Up)
 
             // jack deleted liked post
-            await dc.deletePost(jackWallet.address, {
+            await dc.community.deletePost(jackWallet.address, {
                 author: posts[0].owner,
                 postId: posts[0].uuid,
             }, {
@@ -316,7 +316,7 @@ describe("blockchain", function () {
             const aliceWallet = decentr.createWalletFromMnemonic(alice.mnemonic)
             const dc = new decentr.Decentr(restUrl, chainId)
 
-            await dc.createPost(jackWallet.address, createPost(1), {
+            await dc.community.createPost(jackWallet.address, createPost(1), {
                 broadcast: true,
                 privateKey: jackWallet.privateKey,
             });
@@ -377,7 +377,7 @@ describe("blockchain", function () {
             post.text = "short"
 
             try {
-                await dc.createPost(wallet.address, post, {
+                await dc.community.createPost(wallet.address, post, {
                     broadcast: true,
                     privateKey: wallet.privateKey,
                 });
@@ -394,7 +394,7 @@ describe("blockchain", function () {
             post.text = "x".repeat(64000 + 1)
 
             try {
-                await dc.createPost(wallet.address, post, {
+                await dc.community.createPost(wallet.address, post, {
                     broadcast: true,
                     privateKey: wallet.privateKey,
                 });
@@ -410,7 +410,7 @@ describe("blockchain", function () {
             const dc = new decentr.Decentr(restUrl, chainId)
 
             for (let i = 0; i < 10; i++) {
-                await dc.createPost(wallet.address, createPost(i), {
+                await dc.community.createPost(wallet.address, createPost(i), {
                     broadcast: true,
                     privateKey: wallet.privateKey,
                 });
@@ -432,7 +432,7 @@ describe("blockchain", function () {
                 const post = createPost(i)
                 post.category = randCategory()
 
-                await dc.createPost(wallet.address, post, {
+                await dc.community.createPost(wallet.address, post, {
                     broadcast: true,
                     privateKey: wallet.privateKey,
                 });
@@ -451,7 +451,7 @@ describe("blockchain", function () {
             for (let i = 0; i < 10; i++) {
                 const post = createPost(i)
 
-                await dc.createPost(wallet.address, post, {
+                await dc.community.createPost(wallet.address, post, {
                     broadcast: true,
                     privateKey: wallet.privateKey,
                 });
@@ -520,7 +520,7 @@ describe("blockchain", function () {
             for (let i = 0; i < 3; i++) {
                 const post = createPost(i)
 
-                await dc.createPost(wallet.address, post, {
+                await dc.community.createPost(wallet.address, post, {
                     broadcast: true,
                     privateKey: wallet.privateKey,
                 });
@@ -545,7 +545,7 @@ describe("blockchain", function () {
             for (let i = 0; i < 3; i++) {
                 const post = createPost(i)
 
-                await dc.createPost(wallet.address, post, {
+                await dc.community.createPost(wallet.address, post, {
                     broadcast: true,
                     privateKey: wallet.privateKey,
                 });
@@ -574,25 +574,25 @@ describe("blockchain", function () {
                 birthday: "2010-01-03"
             }
 
-            await dc.setPublicProfile(wallet.address, publicProfile,{
+            await dc.profile.setPublicProfile(wallet.address, publicProfile,{
                 broadcast: true,
                 privateKey: wallet.privateKey,
             })
 
-            let profile  = await dc.getPublicProfile(wallet.address)
+            let profile  = await dc.profile.getPublicProfile(wallet.address)
             assert.isNotEmpty(profile.registeredAt)
 
             const registeredAt = profile.registeredAt
 
-            await dc.setPublicProfile(wallet.address, publicProfile,{
+            await dc.profile.setPublicProfile(wallet.address, publicProfile,{
                 broadcast: true,
                 privateKey: wallet.privateKey,
             })
 
-            profile  = await dc.getPublicProfile(wallet.address)
+            profile  = await dc.profile.getPublicProfile(wallet.address)
             assert.equal(profile.registeredAt, registeredAt, "registeredAt changed")
 
-            const balance = await dc.getTokenBalance(wallet.address)
+            const balance = await dc.pdv.getTokenBalance(wallet.address)
             assert.equal(1, balance)
         })
 
@@ -607,9 +607,9 @@ describe("blockchain", function () {
                 lastName: "ozborn",
             }
 
-            await dc.setPrivateProfile(wallet.address, privateProfile, wallet.privateKey)
+            await dc.profile.setPrivateProfile(wallet.address, privateProfile, wallet.privateKey)
 
-            const profile  = await dc.getPrivateProfile(wallet.address, wallet.privateKey)
+            const profile  = await dc.profile.getPrivateProfile(wallet.address, wallet.privateKey)
             assert.equal(privateProfile, profile)
         })
     })
